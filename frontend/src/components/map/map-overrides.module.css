@@ -1,0 +1,16 @@
+.stationMarker {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border: 3px solid #ffffff;
+  border-radius: 9999px;
+  background: #ff3d8d;
+  box-shadow: 0 4px 12px rgba(17, 18, 38, 0.25);
+  color: #ffffff;
+  cursor: pointer;
+  font: 700 0.7rem/1 Inter, ui-sans-serif, system-ui, sans-serif;
+}
+
+.stationMarker:focus-visible {
+  outline: 3px solid #111226;
+  outline-offset: 2px;
+}
