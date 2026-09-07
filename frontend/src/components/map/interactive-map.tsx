@@ -4,7 +4,6 @@ import "maplibre-gl/dist/maplibre-gl.css";
 
 import { useEffect, useRef, useState } from "react";
 import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
-import { Button } from "../ui/button";
 import { cn } from "../ui/cn";
 import { SafetyMapLegend } from "../safety/safety-map-legend";
 import { addRouteSafetyScoreOverlay, ROUTE_SAFETY_LAYER_ID } from "../safety/route-safety-score-overlay";
@@ -34,7 +33,7 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
 
   useEffect(() => {
     if (!mapNode.current || !mapStyleUrl || mapRef.current) return;
-    const map = new maplibregl.Map({ container: mapNode.current, style: mapStyleUrl, center: DEFAULT_CENTER, zoom: 12.8, attributionControl: true });
+    const map = new maplibregl.Map({ container: mapNode.current, style: mapStyleUrl, center: DEFAULT_CENTER, zoom: 12.8, attributionControl: {} });
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
     map.on("load", () => {
@@ -75,7 +74,7 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
   }, [mapReady, visibility]);
 
   const toggleLayer = (layer: DataLayerId | "stations") => setVisibility((current) => ({ ...current, [layer]: !current[layer] }));
-  if (!mapStyleUrl) return <div className={cn("grid min-h-80 place-items-center rounded-[var(--radius-xl)] bg-[var(--color-canvas)] p-6 text-center", className)}><p className="max-w-sm text-sm leading-6 text-[var(--color-muted)]">Tambahkan URL style MAPID Maps ke <code>NEXT_PUBLIC_MAPID_STYLE_URL</code> agar peta dapat dimuat.</p></div>;
+  if (!mapStyleUrl?.trim()) return <section aria-label="Peta interaktif Commute.ly" className={cn("grid min-h-80 place-items-center rounded-[var(--radius-xl)] border border-[var(--color-line)] bg-white p-6 text-center", className)}><div className="min-w-0 max-w-sm"><h2 className="mb-2 text-lg font-bold">Peta belum tersedia</h2><p className="text-sm leading-6 text-[var(--color-muted)]">Tambahkan URL style MAPID Maps ke <code className="break-all">NEXT_PUBLIC_MAPID_STYLE_URL</code> agar peta dapat dimuat.</p><p className="mt-3 text-sm text-[var(--color-muted)]">Informasi stasiun dan demo rute tetap dapat dijelajahi.</p></div></section>;
 
   return <section aria-label="Peta interaktif Commute.ly" className={cn("relative isolate h-[min(70dvh,48rem)] min-h-80 w-full overflow-hidden rounded-[var(--radius-xl)] bg-[var(--color-canvas)] sm:h-[min(78dvh,52rem)]", className)}>
     <div ref={mapNode} className="absolute inset-0" />

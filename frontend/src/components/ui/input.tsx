@@ -26,7 +26,7 @@ export function Input({
           id={inputId}
           aria-describedby={description || error ? hintId : undefined}
           aria-invalid={Boolean(error)}
-          className={cn("min-h-12 w-full rounded-[var(--radius-md)] border bg-white px-4 text-base font-medium text-[var(--color-ink)] outline-none transition placeholder:font-normal placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary-soft)]", leading && "pl-11", error ? "border-[var(--color-risk)]" : "border-[var(--color-line)]", className)}
+          className={cn("min-h-12 w-full rounded-[var(--radius-md)] border bg-white px-4 text-base font-medium text-[var(--color-ink)] outline-none transition placeholder:font-normal placeholder:text-[var(--color-muted)] focus:border-[var(--color-primary)] focus:ring-4 focus:ring-[var(--color-primary-soft)]", Boolean(leading) && "pl-11", error ? "border-[var(--color-risk)]" : "border-[var(--color-line)]", className)}
           {...props}
         />
       </span>
