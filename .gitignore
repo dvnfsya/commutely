@@ -12,10 +12,9 @@ venv/
 
 # Environment and local state
 .env
-.env.local
-.env.*.local
+# .env.local
+# .env.*.local
 .env.*
-!.env.example
 *.log
 
 # Local data and generated spatial artefacts
