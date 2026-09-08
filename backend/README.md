@@ -51,6 +51,48 @@ HTTPX MockTransport dan tidak memerlukan key nyata atau koneksi eksternal.
 commit kredensial atau memasukkannya ke variabel frontend `NEXT_PUBLIC_*`.
 Endpoint health tidak memanggil database atau layanan eksternal.
 
+## Walking isochrone ORS (TASK 7)
+
+`POST /api/v1/isochrone` memakai `ORS_API_KEY` yang sama di `backend/.env` dan
+HTTPX dependency/timeout yang sama dengan routing. Tidak ada konfigurasi atau
+dependency tambahan. Request:
+
+```json
+{"location": [106.8226, -6.2021], "profile": "foot-walking", "ranges": [300, 600, 900]}
+```
+
+`profile` default `foot-walking` dan hanya profile tersebut yang didukung.
+`ranges` default `[300,600,900]` (5, 10, 15 menit); nilai harus integer dalam
+detik, positif, unik, urut naik, maksimum 3 nilai dan maksimum 900 detik.
+Ini batas aplikasi Commute.ly, lebih ketat daripada
+[batas ORS](https://openrouteservice.org/restrictions/) (10 interval dan 20 jam
+untuk walking). Koordinat memakai validasi `[longitude,latitude]` yang sama
+dengan routing.
+
+Service mengirim `POST https://api.openrouteservice.org/v2/isochrones/foot-walking`
+dengan header `Authorization` dan `Accept: application/geo+json`. Body ORS:
+
+```json
+{"locations": [[106.8226, -6.2021]], "range": [300, 600, 900], "range_type": "time", "location_type": "start"}
+```
+
+Perhatikan `range` (singular) pada ORS, bukan `ranges`. Sesuai
+[kontrak ORS](https://giscience.github.io/openrouteservice-r/reference/ors_isochrones.html),
+time range memakai detik; tidak ada konversi ke menit atau `units: minutes`.
+Endpoint ORS menghasilkan GeoJSON tanpa perlu suffix Directions `/geojson`.
+
+Respons adalah GeoJSON `FeatureCollection`, dengan satu `Feature` per range,
+urut durasi menaik. Setiap feature memiliki `geometry` bertipe `Polygon` dan
+`properties: {"duration_s": 300}` (contoh untuk range pertama). Nilai berasal
+dari ORS `properties.value`, bukan perkiraan dari urutan respons. Metadata
+provider lainnya tidak diteruskan. Polygon harus memiliki ring tertutup dengan
+minimal empat posisi dan tiga titik berbeda; ring interior dipertahankan.
+Response dengan range hilang/duplikat/tidak sesuai atau geometri rusak ditolak.
+
+Status error: 422 validasi input, 503 key kosong, 504 timeout, 502 HTTP/network
+atau respons provider tidak valid. Error tidak memuat key, body, atau exception
+provider. Tests menggunakan MockTransport; tidak ada panggilan ORS nyata.
+
 ## PostgreSQL Supabase dan PostGIS
 
 Tambahkan `DATABASE_URL` ke `backend/.env` menggunakan URI PostgreSQL database
