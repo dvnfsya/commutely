@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from pydantic import SecretStr
+from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,3 +16,5 @@ class Settings(BaseSettings):
     mapid_api_key: SecretStr = SecretStr("")
     database_url: SecretStr = SecretStr("")
     ors_api_key: SecretStr = SecretStr("")
+    gemini_api_key: SecretStr = SecretStr("")
+    gemini_model: str = Field(default="gemini-3.5-flash-lite", pattern=r"^gemini-[a-zA-Z0-9.-]+$")

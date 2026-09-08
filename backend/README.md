@@ -93,6 +93,55 @@ Status error: 422 validasi input, 503 key kosong, 504 timeout, 502 HTTP/network
 atau respons provider tidak valid. Error tidak memuat key, body, atau exception
 provider. Tests menggunakan MockTransport; tidak ada panggilan ORS nyata.
 
+## Gemini assistant (TASK 8)
+
+Set `GEMINI_API_KEY` hanya di `backend/.env` atau environment backend. Model
+default ditentukan sekali di `Settings.gemini_model`; `GEMINI_MODEL` dapat
+menggantinya dengan ID model teks Gemini yang didukung. Jika memakai default,
+biarkan variabel model tidak diset (jangan set string kosong).
+
+Integrasi menggunakan [REST API resmi Google generateContent](https://ai.google.dev/api/generate-content)
+melalui HTTPX yang sudah tersedia; tidak ada SDK/dependency tambahan.
+API key dikirim melalui header `x-goog-api-key`, bukan query URL. Timeout 30 detik
+per operasi jaringan, connect timeout 5 detik, tanpa retry atau redirect otomatis.
+
+`POST /api/v1/assistant` menerima question dan context berupa objek JSON:
+
+```json
+{
+  "question": "Bagaimana kondisi keamanan rute ini?",
+  "context": {
+    "station": "Sudirman",
+    "safety_score": 72,
+    "route_distance_m": 1200,
+    "route_duration_s": 720,
+    "lighting": "cukup",
+    "police_nearby": true,
+    "retail_24h": 3
+  }
+}
+```
+
+Nilai di atas hanya contoh input, bukan hasil analisis atau data produksi.
+Contoh bentuk respons: `{"answer":"Data yang tersedia belum cukup untuk memastikan keamanan rute."}`.
+Question wajib nonkosong setelah trim, maksimum 2000 karakter. Context wajib
+objek JSON dengan nilai finite dan maksimum 16000 byte setelah serialisasi JSON
+ASCII; objek kosong diperbolehkan. Jawaban maksimum 8000 karakter.
+
+System instruction terpisah mengarahkan Gemini untuk menjelaskan konteks yang
+diberikan, mengakui data tidak cukup, menjawab ringkas dalam bahasa pertanyaan,
+dan tidak menghitung Safety Score/route safety atau mengarang hasil spasial.
+Question/context diperlakukan sebagai data yang tidak boleh menimpa aturan sistem.
+Ini instruksi perilaku model, bukan jaminan kebenaran: context berasal dari caller
+dan belum diverifikasi. Tidak ada tools, query database, akses MAPID/ORS, history,
+RAG, atau penghitungan skor dalam service ini.
+
+Status error: 422 untuk input tidak valid, 503 jika key belum diset, 504 timeout,
+502 kegagalan provider atau respons kosong/rusak/diblokir/terpotong. Respons
+hanya berisi answer; metadata mentah dan thought parts tidak diteruskan. Service
+tidak mencetak prompt, key, atau exception provider. Tests memakai MockTransport
+tanpa key nyata atau panggilan Gemini. Health tetap dapat dipakai tanpa key.
+
 ## PostgreSQL Supabase dan PostGIS
 
 Tambahkan `DATABASE_URL` ke `backend/.env` menggunakan URI PostgreSQL database
