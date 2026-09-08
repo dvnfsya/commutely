@@ -14,3 +14,5 @@ class Settings(BaseSettings):
     app_name: str = "Commute.ly API"
     cors_origins: list[str] = ["http://localhost:3000"]
     mapid_api_key: SecretStr = SecretStr("")
+    database_url: SecretStr = SecretStr("")
+    ors_api_key: SecretStr = SecretStr("")
