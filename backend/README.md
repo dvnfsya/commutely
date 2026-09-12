@@ -34,7 +34,7 @@ untuk startup, health, atau tests. `POST /api/v1/routing` menerima:
 {"origin": [106.8226, -6.2021], "destination": [106.8300, -6.1900], "profile": "foot-walking"}
 ```
 
-Profile yang didukung saat ini hanya `foot-walking` (default). Koordinat selalu
+Profile routing: `foot-walking` (default), `cycling-regular`, dan `driving-car`. Koordinat selalu
 `[longitude, latitude]`, berupa angka finite dengan rentang [-180,180] dan [-90,90].
 Respons berisi `distance_m`, `duration_s`, dan `geometry` GeoJSON `LineString`;
 metadata mentah provider tidak diteruskan. Service meminta satu base route dari
@@ -50,6 +50,19 @@ HTTPX MockTransport dan tidak memerlukan key nyata atau koneksi eksternal.
 `MAPID_API_KEY` hanya placeholder opsional untuk integrasi mendatang. Jangan
 commit kredensial atau memasukkannya ke variabel frontend `NEXT_PUBLIC_*`.
 Endpoint health tidak memanggil database atau layanan eksternal.
+
+## Pencarian lokasi (Phase 2)
+
+`GET /api/v1/geocoding/autocomplete?q=Palmerah` menerima teks 3–200 karakter
+setelah trim. Backend memanggil ORS Pelias `/geocode/autocomplete` menggunakan
+`ORS_API_KEY` yang sama melalui header Authorization. Pencarian dibatasi Indonesia
+(`boundary.country=IDN`) dan diprioritaskan di sekitar Jakarta; bukan batas Jakarta
+yang mutlak. Maksimum 8 hasil dikembalikan sebagai
+`{"locations":[{"label":"...","coordinates":[106.8,-6.2],"type":"location"}]}`.
+Tipe hasil `address` atau `location`; hasil kosong adalah `{"locations":[]}`.
+Status 422 untuk query invalid, 503 key kosong, 504 timeout, dan 502 kegagalan
+provider/respons invalid. Tidak ada database alamat atau geocoding di browser.
+Isochrone tetap walking-only.
 
 ## Walking isochrone ORS (TASK 7)
 

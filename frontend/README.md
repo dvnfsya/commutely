@@ -23,7 +23,22 @@ npm start
 
 Tailwind menggunakan plugin PostCSS dan import CSS di `src/app/globals.css`; token visual tetap berasal dari `src/styles/tokens.css`. Font menggunakan fallback lokal dari token, tanpa mengunduh font saat build.
 
-Pilih kartu/marker stasiun untuk memperbarui informasi dan Safety Score. Navigasi Stasiun/Rute mengganti isi panel. Pencarian rute masih menggunakan satu fixture tetap, bukan routing sebenarnya. Layer dan kontrol peta tersedia setelah style MAPID berhasil dimuat. Backend, AI, dan API data belum terhubung.
+Pilih kartu/marker stasiun untuk memperbarui informasi dan Safety Score. Navigasi Stasiun/Rute mengganti isi panel. Layer dan kontrol peta tersedia setelah style MAPID berhasil dimuat.
+
+## Routing lokasi dan tiga moda
+
+Jalankan FastAPI dan set `NEXT_PUBLIC_API_BASE_URL` bila backend bukan di
+`http://127.0.0.1:8000`. ORS_API_KEY hanya disimpan di backend.
+Cari lokasi dengan minimal 3 karakter lalu pilih hasil; pencarian Pelias melalui
+FastAPI ditunda 350 ms dan request lama dibatalkan saat teks berubah. Tiga stasiun
+prototype memakai koordinat dari data stasiun existing. Teks yang belum dipilih
+tidak dapat dikirim sebagai endpoint rute. Tombol Tukar menukar label dan koordinat.
+
+Pilih Jalan kaki, Sepeda, atau Mobil lalu Cari Rute. Jarak/waktu berasal dari ORS;
+satu garis biru di peta diperbarui dari geometri respons. Lokasi → stasiun,
+stasiun → lokasi, lokasi → lokasi, dan stasiun → stasiun didukung. Safety Score
+tetap milik titik stasiun, bukan ruas rute. Tidak ada GPS wajib, alternatif rute,
+UI isochrone, atau petunjuk belokan. Cakupan alamat bergantung data Pelias.
 
 ```text
 src/
