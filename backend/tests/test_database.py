@@ -98,7 +98,9 @@ def test_alembic_offline_uses_shared_url_and_protects_existing_tables(monkeypatc
         module = runpy.run_path(str(Path(__file__).parents[1] / "alembic" / "env.py"))
     assert configure.call_args.kwargs["url"].password == "fake%pass"
     assert set(configure.call_args.kwargs["target_metadata"].tables) == {
-        "public.stations", "public.facilities"
+        "public.station", "public.halte_dropoff", "public.lighting",
+        "public.health_facility", "public.police_station", "public.railway",
+        "public.halte_transjakarta", "public.safety_score",
     }
     include_object = module["include_object"]
     assert not include_object(None, "existing_supabase_table", "table", True, None)

@@ -34,7 +34,7 @@ export default function HomePage() {
       <header className="mb-5 flex flex-wrap items-center justify-between gap-4">
         <div>
           <Heading as="h1" size="xl" className="text-[var(--color-primary-strong)]">Commute.ly</Heading>
-          <Text tone="muted" size="sm">Konteks keamanan perjalanan KRL di Jakarta</Text>
+          <Text tone="muted" size="sm">Your Commuting Buddy!</Text>
         </div>
         <StatusIndicator tone="info" label="Prototype · Data dummy" />
       </header>
