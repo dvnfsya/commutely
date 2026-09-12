@@ -13,7 +13,7 @@ class RoutingRequest(BaseModel):
 
     origin: Coordinates
     destination: Coordinates
-    profile: Literal["foot-walking"] = "foot-walking"
+    profile: Literal["foot-walking", "cycling-regular", "driving-car"] = "foot-walking"
 
 
 class RouteGeometry(BaseModel):

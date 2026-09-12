@@ -62,13 +62,22 @@ def test_success_and_coordinate_order(routing_client):
 @pytest.mark.parametrize("changes", [
     {"origin": [-6.2, 106.8]}, {"origin": [181, 0]}, {"destination": [0, -91]},
     {"origin": [1]}, {"origin": [1, 2, 3]}, {"origin": [True, 0]},
-    {"origin": ["106.8", 0]}, {"origin": None}, {"profile": "driving-car"},
+    {"origin": ["106.8", 0]}, {"origin": None}, {"profile": "motorcycle"},
     {"profile": "../../other"}, {"alternatives": True},
 ])
 def test_request_validation(routing_client, changes):
     client, calls, _, _ = routing_client
     assert client.post("/api/v1/routing", json={**REQUEST, **changes}).status_code == 422
     assert not calls
+
+
+@pytest.mark.parametrize("profile", ["foot-walking", "cycling-regular", "driving-car"])
+def test_supported_profiles(routing_client, profile):
+    client, calls, _, _ = routing_client
+    response = client.post("/api/v1/routing", json={**REQUEST, "profile": profile})
+    assert response.status_code == 200
+    assert calls[0].url.path == f"/v2/directions/{profile}/geojson"
+    assert json.loads(calls[0].content)["coordinates"] == [REQUEST["origin"], REQUEST["destination"]]
 
 
 @pytest.mark.parametrize("value", [float("nan"), float("inf"), -float("inf")])

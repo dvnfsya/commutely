@@ -15,14 +15,27 @@ class ORSError(Exception):
 
 
 def post_ors(path: str, body: dict, settings: Settings, client: httpx.Client, service: str) -> httpx.Response:
+    return _request_ors("POST", f"{ORS_BASE_URL}/{path}", settings, client, service, json=body)
+
+
+def autocomplete_ors(query: str, settings: Settings, client: httpx.Client) -> httpx.Response:
+    return _request_ors(
+        "GET", "https://api.openrouteservice.org/geocode/autocomplete",
+        settings, client, "Geocoding",
+        params={"text": query, "boundary.country": "IDN",
+                "focus.point.lon": 106.8272, "focus.point.lat": -6.2045},
+    )
+
+
+def _request_ors(method: str, url: str, settings: Settings, client: httpx.Client, service: str, **kwargs) -> httpx.Response:
     key = settings.ors_api_key.get_secret_value().strip()
     if not key:
         raise ORSError(503, f"{service} service is not configured.")
     try:
-        response = client.post(
-            f"{ORS_BASE_URL}/{path}",
+        response = client.request(
+            method, url,
             headers={"Authorization": key, "Accept": "application/geo+json"},
-            json=body,
+            **kwargs,
         )
         response.raise_for_status()
         return response

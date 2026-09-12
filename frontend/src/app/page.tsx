@@ -10,6 +10,7 @@ import { Card } from "../components/ui/card";
 import { MapNavigation } from "../components/ui/navigation";
 import { StatusIndicator } from "../components/ui/status-indicator";
 import { Heading, Text } from "../components/ui/typography";
+import type { BaseRoute } from "../components/routing/types";
 
 const navigation = [
   { id: "stations", label: "Stasiun", icon: "◉" },
@@ -19,6 +20,7 @@ const navigation = [
 export default function HomePage() {
   const [activePanel, setActivePanel] = useState("stations");
   const [station, setStation] = useState(dummyStations[0]);
+  const [route, setRoute] = useState<BaseRoute | null>(null);
   const selectStation = useCallback((code: string) => {
     const selected = dummyStations.find((item) => item.code === code);
     if (selected) {
@@ -39,7 +41,10 @@ export default function HomePage() {
 
       <main className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]">
         <section aria-label="Eksplorasi peta dan stasiun" className="min-w-0 space-y-4 lg:sticky lg:top-6">
-          <InteractiveMap onStationSelect={selectStation} />
+          <InteractiveMap
+            onStationSelect={selectStation}
+            route={route}
+          />
           <div>
             <Heading size="md" className="mb-3">Jelajahi stasiun</Heading>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
@@ -58,8 +63,8 @@ export default function HomePage() {
             </div>
             <div hidden={activePanel !== "routing"} className="space-y-4">
               <Heading size="md">Rencanakan perjalanan</Heading>
-              <Text size="sm" tone="muted">Demo ini selalu menampilkan satu rute contoh dengan jarak, waktu, dan geometri tetap. Pencarian belum menggunakan lokasi sebenarnya.</Text>
-              <RoutePlanner />
+              <Text size="sm" tone="muted">Temukan rute dari lokasi kamu ke stasiun atau perjalanan pulang dari stasiun ke tujuan. Data Safety Score stasiun masih berupa contoh.</Text>
+              <RoutePlanner onRouteChange={setRoute} />
             </div>
           </Card>
         </aside>

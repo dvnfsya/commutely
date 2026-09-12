@@ -2,6 +2,7 @@ import type { BaseRoute } from "./types";
 
 /** One dummy base route only. It is not generated from Safety Score. */
 export const dummyBaseRoute: BaseRoute = {
+  profile: "foot-walking",
   id: "karet-menteng-base-route",
   origin: "Stasiun Karet",
   destination: "Menteng, Jakarta",

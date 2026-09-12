@@ -3,29 +3,31 @@
 import "maplibre-gl/dist/maplibre-gl.css";
 
 import { useEffect, useRef, useState } from "react";
-import maplibregl, { type Map as MapLibreMap } from "maplibre-gl";
+import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from "maplibre-gl";
 import { cn } from "../ui/cn";
-import { SafetyMapLegend } from "../safety/safety-map-legend";
-import { addRouteSafetyScoreOverlay, ROUTE_SAFETY_LAYER_ID } from "../safety/route-safety-score-overlay";
-import { dummyBaseRoute } from "../routing/dummy-routes";
+import type { BaseRoute } from "../routing/types";
 import { DATA_LAYER_IDS, ensureDataLayer, type DataLayerId } from "./map-layer-data";
 import { MapLayerControl, type MapLayerControlState } from "./map-layer-control";
 import { stationGeoJson } from "./dummy-geojson";
 import styles from "./map-overrides.module.css";
 
+
 const DEFAULT_CENTER: [number, number] = [106.8272, -6.2045];
-type LayerKey = DataLayerId | "safety-route" | "stations";
+const ROUTE_SOURCE_ID = "ors-route";
+const ROUTE_LAYER_ID = "ors-route-line";
+type LayerKey = DataLayerId | "stations";
 type LayerVisibility = Record<LayerKey, boolean>;
-const initialVisibility: LayerVisibility = { stations: true, "safety-route": true, pju: false, "nighttime-light": false, police: false, health: false, retail: false, survey: false };
+const initialVisibility: LayerVisibility = { stations: true, pju: false, "nighttime-light": false, police: false, health: false, retail: false, survey: false };
 
 export type InteractiveMapProps = {
   /** MAPID Maps style JSON URL. Configure it through NEXT_PUBLIC_MAPID_STYLE_URL. */
   mapStyleUrl?: string;
   className?: string;
   onStationSelect?: (stationCode: string) => void;
+  route?: BaseRoute | null;
 };
 
-export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STYLE_URL, className, onStationSelect }: InteractiveMapProps) {
+export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STYLE_URL, className, onStationSelect, route }: InteractiveMapProps) {
   const mapNode = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -37,15 +39,14 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
     mapRef.current = map;
     map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), "bottom-right");
     map.on("load", () => {
-      addRouteSafetyScoreOverlay(map, dummyBaseRoute);
-      map.on("click", ROUTE_SAFETY_LAYER_ID, (event) => {
-        const feature = event.features?.[0];
-        if (!feature) return;
-        const { safetyScore, safetyLabel } = feature.properties ?? {};
-        new maplibregl.Popup({ offset: 12 }).setLngLat(event.lngLat).setHTML(`<strong>Safety Score ruas: ${safetyScore ?? "—"}</strong><br/><span>${safetyLabel ?? "Data dummy"}</span>`).addTo(map);
+      map.addSource(ROUTE_SOURCE_ID, { type: "geojson", data: { type: "FeatureCollection", features: [] } });
+      map.addLayer({
+        id: ROUTE_LAYER_ID,
+        type: "line",
+        source: ROUTE_SOURCE_ID,
+        layout: { "line-cap": "round", "line-join": "round" },
+        paint: { "line-color": "#2563eb", "line-width": 5, "line-opacity": 0.9 },
       });
-      map.on("mouseenter", ROUTE_SAFETY_LAYER_ID, () => { map.getCanvas().style.cursor = "pointer"; });
-      map.on("mouseleave", ROUTE_SAFETY_LAYER_ID, () => { map.getCanvas().style.cursor = ""; });
       stationGeoJson.features.forEach((feature) => {
         const element = document.createElement("button");
         element.type = "button";
@@ -65,13 +66,26 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !mapReady) return;
-    if (map.getLayer(ROUTE_SAFETY_LAYER_ID)) map.setLayoutProperty(ROUTE_SAFETY_LAYER_ID, "visibility", visibility["safety-route"] ? "visible" : "none");
     DATA_LAYER_IDS.forEach((layerId) => {
       // A data source is created only the first time its layer is made visible.
       if (visibility[layerId] || map.getSource(layerId)) ensureDataLayer(map, layerId, visibility[layerId]);
     });
     map.getContainer().querySelectorAll<HTMLElement>("[data-layer='stations']").forEach((marker) => { marker.style.display = visibility.stations ? "block" : "none"; });
   }, [mapReady, visibility]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !mapReady) return;
+    const source = map.getSource(ROUTE_SOURCE_ID) as GeoJSONSource | undefined;
+    source?.setData(route?.geometry ?? { type: "FeatureCollection", features: [] });
+    if (route) {
+      const bounds = new maplibregl.LngLatBounds();
+      route.geometry.features.forEach((feature) => feature.geometry.coordinates.forEach(
+        (coordinate) => bounds.extend([coordinate[0], coordinate[1]]),
+      ));
+      if (!bounds.isEmpty()) map.fitBounds(bounds, { padding: 60, maxZoom: 15, duration: 500 });
+    }
+  }, [mapReady, route]);
 
   const toggleLayer = (layer: DataLayerId | "stations") => setVisibility((current) => ({ ...current, [layer]: !current[layer] }));
   if (!mapStyleUrl?.trim()) return <section aria-label="Peta interaktif Commute.ly" className={cn("grid min-h-80 place-items-center rounded-[var(--radius-xl)] border border-[var(--color-line)] bg-white p-6 text-center", className)}><div className="min-w-0 max-w-sm"><h2 className="mb-2 text-lg font-bold">Peta belum tersedia</h2><p className="text-sm leading-6 text-[var(--color-muted)]">Tambahkan URL style MAPID Maps ke <code className="break-all">NEXT_PUBLIC_MAPID_STYLE_URL</code> agar peta dapat dimuat.</p><p className="mt-3 text-sm text-[var(--color-muted)]">Informasi stasiun dan demo rute tetap dapat dijelajahi.</p></div></section>;
@@ -81,6 +95,5 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
       <div ref={mapNode} className="h-full w-full" />
     </div>
     <MapLayerControl visibility={visibility as MapLayerControlState} onToggle={toggleLayer} />
-    <SafetyMapLegend />
   </section>;
 }
