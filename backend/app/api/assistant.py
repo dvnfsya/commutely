@@ -45,15 +45,19 @@ def assistant(
 
         score = repository.score_for_station(session, payload.station_id)
         if score is None:
-            raise HTTPException(404, "No Safety Score is available for this station.")
-
-        context["station_safety"] = {
-            "station_id": str(score["station_id"]),
-            "station_name": str(score["name"]),
-            "safety_score": float(score["safety_score"]),
-            "category": str(score["category"]),
-            "rank": int(score["rank"]),
-        }
+            context["station_safety"] = {
+                "station_id": payload.station_id,
+                "available": False,
+            }
+        else:
+            context["station_safety"] = {
+                "station_id": str(score["station_id"]),
+                "station_name": str(score["name"]),
+                "safety_score": float(score["safety_score"]),
+                "category": str(score["category"]),
+                "rank": int(score["rank"]),
+                "available": True,
+            }
 
     gemini_payload = AssistantRequest(
         question=payload.question,

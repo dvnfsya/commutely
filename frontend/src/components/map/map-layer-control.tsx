@@ -20,7 +20,7 @@ export function MapLayerControl({
     {
       id: "stations" as const,
       label: "Stasiun",
-      description: "Marker stasiun KRL",
+      description: "Stasiun KRL",
     },
     ...DATA_LAYER_IDS.map((id) => ({
       id,

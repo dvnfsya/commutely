@@ -19,7 +19,7 @@ function load(file, dependencies, globals = {}) {
 test('assistant API sends empty context and selected station or null, and validates responses', async () => {
   const calls = [];
   let result = { ok: true, json: async () => ({ answer: 'Jawaban tersedia.' }) };
-  const api = load('src/lib/assistant-api.ts', {}, { fetch: async (url, options) => {
+  const api = load('src/lib/assistant-api.ts', { './station-info-api': { fetchStations: async () => [] } }, { fetch: async (url, options) => {
     calls.push({ url, options }); return result;
   } });
   for (const station of [null, 'TBT']) {
@@ -31,6 +31,14 @@ test('assistant API sends empty context and selected station or null, and valida
   await assert.rejects(api.askAssistant('Tes', null, new AbortController().signal));
   result = { ok: true, json: async () => ({ answer: '' }) };
   await assert.rejects(api.askAssistant('Tes', null, new AbortController().signal));
+});
+
+test('explicit station mention takes priority over the selected station', async () => {
+  const api = load('src/lib/assistant-api.ts', { './station-info-api': { fetchStations: async () => [
+    { id: 'MTR', name: 'Matraman' }, { id: 'KLD', name: 'Stasiun Klender' },
+  ] } });
+  assert.equal(await api.stationForQuestion('Stasiun Klender gimana?', 'MTR', new AbortController().signal), 'KLD');
+  assert.equal(await api.stationForQuestion('Kalau malam aman nggak?', 'MTR', new AbortController().signal), 'MTR');
 });
 
 // Exercise handlers with lightweight hook/JSX adapters; no browser or live API.
@@ -51,7 +59,7 @@ function harness() {
   const jsx = (type, props) => ({ type, props });
   const { AssistantChat } = load('src/components/assistant/assistant-chat.tsx', {
     react, 'react/jsx-runtime': { jsx, jsxs: jsx }, '../ui/button': { Button: 'Button' },
-    '../../lib/assistant-api': { askAssistant: (...args) => {
+    '../../lib/assistant-api': { stationForQuestion: async (_question, stationId) => stationId, askAssistant: (...args) => {
       calls.push(args); return new Promise((yes, no) => { resolve = yes; reject = no; });
     } },
   });
@@ -74,7 +82,7 @@ test('chat opens/closes, FAQ submits with station, duplicate submit is blocked, 
   tree = chat.render('TBT');
   assert.ok(find(tree, (n) => n.props.role === 'dialog'));
   const faq = find(tree, (n) => n.props.children === 'Apa itu Safety Score?');
-  faq.props.onClick(); faq.props.onClick();
+  faq.props.onClick(); faq.props.onClick(); await flush();
   assert.equal(chat.calls.length, 1);
   assert.equal(chat.calls[0][0], 'Apa itu Safety Score?');
   assert.equal(chat.calls[0][1], 'TBT');
@@ -97,14 +105,14 @@ test('normal question uses latest station, Shift+Enter does not send, errors res
   const input = find(tree, (n) => n.type === 'textarea');
   input.props.onKeyDown({ key: 'Enter', shiftKey: true });
   assert.equal(chat.calls.length, 0);
-  input.props.onKeyDown({ key: 'Enter', shiftKey: false, nativeEvent: { isComposing: false }, preventDefault() {} });
+  input.props.onKeyDown({ key: 'Enter', shiftKey: false, nativeEvent: { isComposing: false }, preventDefault() {} }); await flush();
   assert.equal(chat.calls[0][0], 'Bagaimana perjalanan saya?');
   assert.equal(chat.calls[0][1], null);
   chat.reject(); await flush();
   tree = chat.render('TBT');
   assert.ok(find(tree, (n) => n.props.role === 'alert'));
   assert.equal(find(tree, (n) => n.type === 'textarea').props.value, 'Bagaimana perjalanan saya?');
-  find(tree, (n) => n.type === 'form').props.onSubmit({ preventDefault() {} });
+  find(tree, (n) => n.type === 'form').props.onSubmit({ preventDefault() {} }); await flush();
   assert.equal(chat.calls[1][1], 'TBT');
   chat.resolve('Jawaban'); await flush();
   tree = chat.render();

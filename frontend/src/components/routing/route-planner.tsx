@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { RouteDetail } from "./route-detail";
 import { RouteResult } from "./route-result";
 import { RouteSearchForm } from "./route-search-form";
 import { hasValidCoordinates, type BaseRoute, type RouteLocation, type RoutingProfile } from "./types";
@@ -100,14 +99,8 @@ export function RoutePlanner({ onRouteChange }: RoutePlannerProps) {
         </p>
       )}
 
-      {route && (
-        <RouteResult
-          route={route}
-          onViewDetail={() => setDetailOpen((open) => !open)}
-        />
-      )}
+      {route && <RouteResult route={route} />}
 
-      {route && detailOpen && <RouteDetail route={route} />}
     </section>
   );
 }

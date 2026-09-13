@@ -76,7 +76,7 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
   const toggleLayer = (layer: DataLayerId | "stations") => setVisibility((current) => ({ ...current, [layer]: !current[layer] }));
   if (!mapStyleUrl?.trim()) return <section aria-label="Peta interaktif Commute.ly" className={cn("grid min-h-80 place-items-center rounded-[var(--radius-xl)] border border-[var(--color-line)] bg-white p-6 text-center", className)}><div className="min-w-0 max-w-sm"><h2 className="mb-2 text-lg font-bold">Peta belum tersedia</h2><p className="text-sm leading-6 text-[var(--color-muted)]">Tambahkan URL style MAPID Maps ke <code className="break-all">NEXT_PUBLIC_MAPID_STYLE_URL</code> agar peta dapat dimuat.</p><p className="mt-3 text-sm text-[var(--color-muted)]">Informasi stasiun dan demo rute tetap dapat dijelajahi.</p></div></section>;
 
-  return <section aria-label="Peta interaktif Commute.ly" className={cn("relative isolate h-[min(70dvh,48rem)] min-h-80 w-full overflow-hidden rounded-[var(--radius-xl)] bg-[var(--color-canvas)] sm:h-[min(78dvh,52rem)]", className)}>
+  return <section aria-label="Peta interaktif Commute.ly" className={cn("relative isolate h-full min-h-80 w-full overflow-hidden rounded-[var(--radius-xl)] border border-[var(--color-line)] bg-[var(--color-canvas)] shadow-[var(--shadow-card)]", className)}>
     <div className="absolute inset-0">
       <div ref={mapNode} className="h-full w-full" />
     </div>

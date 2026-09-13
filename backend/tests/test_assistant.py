@@ -1,12 +1,13 @@
 from copy import deepcopy
 import json
+from unittest.mock import patch
 
 import httpx
 import pytest
 from fastapi.testclient import TestClient
 from pydantic import SecretStr, ValidationError
 
-from app.api.assistant import get_gemini_client
+from app.api.assistant import get_gemini_client, get_read_session
 from app.core.config import Settings
 from app.main import create_app
 from app.schemas.assistant import AssistantRequest
@@ -38,6 +39,7 @@ def api():
     app = create_app(settings)
     with httpx.Client(transport=httpx.MockTransport(handler)) as upstream:
         app.dependency_overrides[get_gemini_client] = lambda: upstream
+        app.dependency_overrides[get_read_session] = lambda: iter(())
         with TestClient(app) as client:
             yield client, state, calls, settings
 
@@ -245,3 +247,17 @@ def test_environment_configuration(monkeypatch):
 def test_model_path_validation():
     with pytest.raises(ValidationError):
         Settings(_env_file=None, gemini_model="../unexpected?key=secret")
+
+
+def test_station_without_score_is_sent_as_unavailable_context(api):
+    client, _, calls, _ = api
+    with patch("app.api.assistant.repository.station_exists", return_value=True), patch(
+        "app.api.assistant.repository.score_for_station", return_value=None
+    ):
+        response = client.post("/api/v1/assistant", json={
+            "question": "Stasiun ini aman malam hari?", "context": {}, "station_id": "TBT",
+        })
+    assert response.status_code == 200
+    body = json.loads(calls[0].content)
+    prompt = json.loads(body["contents"][0]["parts"][0]["text"])
+    assert prompt["context"]["station_safety"] == {"station_id": "TBT", "available": False}

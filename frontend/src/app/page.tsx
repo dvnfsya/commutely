@@ -32,19 +32,21 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="mx-auto min-h-dvh max-w-[100rem] p-3 sm:p-6">
-      <header className="mb-5 flex flex-wrap items-center justify-between gap-4">
+    <div className="min-h-dvh bg-[var(--color-canvas)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--color-line)] bg-white/95 px-3 py-3 backdrop-blur sm:px-6 lg:h-20">
+        <div className="mx-auto flex max-w-[100rem] flex-wrap items-center justify-between gap-3">
         <div>
           <Heading as="h1" size="xl" className="text-[var(--color-primary-strong)]">Commute.ly</Heading>
-          <Text tone="muted" size="sm">Your Commuting Buddy!</Text>
+          {/* <Text tone="muted" size="sm">Your Commuting Buddy!</Text> */}
         </div>
-        <StatusIndicator tone="info" label="Prototype · Data dummy" />
+        </div>
       </header>
 
-      <main className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]">
-        <section aria-label="Eksplorasi peta dan stasiun" className="min-w-0 space-y-4 lg:sticky lg:top-6">
-          <div className="relative">
+      <main className="mx-auto grid max-w-[100rem] gap-4 p-3 sm:p-4 lg:h-[calc(100dvh-5rem)] lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)] lg:overflow-hidden">
+        <section aria-label="Eksplorasi peta dan stasiun" className="min-w-0 lg:h-full">
+          <div className="relative h-[min(65dvh,48rem)] min-h-80 lg:h-full lg:min-h-0">
           <InteractiveMap
+            className="h-full min-h-0"
             onStationSelect={selectStation}
             route={route}
             walkingArea={walkingArea}
@@ -54,7 +56,7 @@ export default function HomePage() {
           
         </section>
 
-        <aside aria-label="Informasi perjalanan" className="min-w-0 space-y-4">
+        <aside aria-label="Informasi perjalanan" className="min-w-0 space-y-4 lg:h-full lg:overflow-y-auto lg:pr-1">
           <MapNavigation items={navigation} activeId={activePanel} onChange={setActivePanel} />
           <Card>
             <div hidden={activePanel !== "stations"}>
