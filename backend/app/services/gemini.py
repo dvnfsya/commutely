@@ -1,3 +1,5 @@
+import json
+
 import httpx
 
 from app.core.config import Settings
@@ -47,8 +49,7 @@ def get_answer(request: AssistantRequest, settings: Settings, client: httpx.Clie
             headers={"x-goog-api-key": key},
             json={
                 "systemInstruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
-                "contents": [{"role": "user", "parts": [{"text": request.model_dump_json()}]}],
-                "generationConfig": {"maxOutputTokens": 2048},
+                "contents": [{"role": "user", "parts": [{"text": json.dumps({"question": request.question, "context": request.context}, ensure_ascii=False)}]}],                "generationConfig": {"maxOutputTokens": 2048},
             },
         )
         response.raise_for_status()

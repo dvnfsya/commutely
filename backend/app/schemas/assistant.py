@@ -9,7 +9,7 @@ class AssistantRequest(BaseModel):
 
     question: Annotated[str, StringConstraints(strict=True, strip_whitespace=True, min_length=1, max_length=2000)]
     context: dict[str, JsonValue]
-
+    station_id: str | None = None
     @field_validator("context")
     @classmethod
     def bounded_context(cls, value):
