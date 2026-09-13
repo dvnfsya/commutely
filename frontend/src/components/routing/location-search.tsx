@@ -2,23 +2,20 @@
 
 import { useEffect, useId, useState } from "react";
 import { searchLocations } from "../../lib/geocoding-api";
-import { dummyStations } from "../station/dummy-stations";
 import { Input } from "../ui/input";
 import type { RouteLocation } from "./types";
 
 export type LocationSelection = { text: string; location: RouteLocation | null };
-export const stationLocations: RouteLocation[] = dummyStations.map((station) => ({
-  label: station.name, coordinates: station.coordinates, type: "station",
-}));
 
-export function LocationSearch({ label, value, onChange, disabled }: {
+export function LocationSearch({ label, value, onChange, disabled, stations, stationStatus }: {
   label: string; value: LocationSelection; onChange: (value: LocationSelection) => void; disabled: boolean;
+  stations: RouteLocation[]; stationStatus: "loading" | "ready" | "empty" | "error";
 }) {
   const id = useId();
   const [open, setOpen] = useState(false);
   const [result, setResult] = useState<{ query: string; locations: RouteLocation[]; error?: string } | null>(null);
   const query = value.text.trim();
-  const local = stationLocations.filter((station) => station.label.toLowerCase().includes(query.toLowerCase()));
+  const local = stations.filter((station) => station.label.toLowerCase().includes(query.toLowerCase()));
 
   useEffect(() => {
     if (!open || value.location || query.length < 3 || query.length > 200 || disabled) return;
@@ -52,7 +49,10 @@ export function LocationSearch({ label, value, onChange, disabled }: {
         </button></li>)}
       </ul>
       <p role="status" className="p-2 text-xs text-[var(--color-muted)]">
-        {query.length < 3 ? "Ketik minimal 3 karakter untuk mencari alamat."
+        {stationStatus === "loading" ? "Memuat daftar stasiun..."
+          : stationStatus === "error" ? "Daftar stasiun gagal dimuat. Pencarian alamat tetap tersedia."
+          : stationStatus === "empty" ? "Daftar stasiun belum tersedia. Pencarian alamat tetap tersedia."
+          : query.length < 3 ? "Ketik minimal 3 karakter untuk mencari alamat atau stasiun."
           : current?.error ?? (!current ? "Mencari lokasi..." : suggestions.length === 0 ? "Lokasi tidak ditemukan. Coba nama yang lebih lengkap." : "Pilih lokasi dari hasil pencarian.")}
       </p>
     </div>}

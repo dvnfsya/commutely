@@ -64,11 +64,15 @@ function SpatialLayer({ map, layer, visible, onStationSelect }: {
       const properties = event.features?.[0]?.properties;
       if (!properties || typeof properties.id !== "string") return;
       const name = typeof properties.name === "string" ? properties.name : null;
+      const geometry = event.features?.[0]?.geometry;
+      const coordinates = geometry?.type === "Point" && Array.isArray(geometry.coordinates)
+        && geometry.coordinates.length === 2 && geometry.coordinates.every((value) => typeof value === "number" && Number.isFinite(value))
+        ? [geometry.coordinates[0], geometry.coordinates[1]] as [number, number] : undefined;
       const content = document.createElement("div");
       content.textContent = name ?? definitions[layer].label;
       popup?.remove();
       popup = new Popup({ offset: 12 }).setLngLat(event.lngLat).setDOMContent(content).addTo(map);
-      if (layer === "stations") onStationSelect?.(properties.id, { id: properties.id, name });
+      if (layer === "stations") onStationSelect?.(properties.id, { id: properties.id, name, coordinates });
     };
     const enter = () => { map.getCanvas().style.cursor = "pointer"; };
     const leave = () => { map.getCanvas().style.cursor = ""; };

@@ -9,6 +9,8 @@ from sqlalchemy.orm import Session
 from app.db import stations as repository
 from app.db.session import get_db
 from app.schemas.stations import SafetyScoreResponse, StationResponse
+from app.db.schedules import schedule_for_station
+from app.schemas.schedules import ScheduleEntry, StationScheduleResponse
 
 router = APIRouter(tags=["stations"])
 
@@ -47,3 +49,15 @@ def station_safety_score(station_id: str, session: Session = Depends(get_read_se
     if row is None:
         raise HTTPException(404, "No Safety Score is available for this station.")
     return SafetyScoreResponse.model_validate(row)
+
+
+@router.get("/stations/{station_id}/schedule", response_model=StationScheduleResponse)
+def station_schedule(station_id: str, session: Session = Depends(get_read_session)):
+    rows = schedule_for_station(session, station_id)
+    if not rows:
+        raise HTTPException(404, "No schedule is available for this station.")
+    return StationScheduleResponse(
+        station_id=rows[0]["station_id"],
+        station_name=rows[0]["station_name"],
+        schedules=[ScheduleEntry.model_validate(row) for row in rows],
+    )

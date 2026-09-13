@@ -8,6 +8,7 @@ from app.api.geocoding import router as geocoding_router
 from app.api.stations import router as stations_router
 from app.api.mapid import router as mapid_router
 from app.api.spatial_layers import router as spatial_layers_router
+from app.api.station_facilities import router as station_facilities_router
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(health_router)
@@ -18,3 +19,4 @@ api_router.include_router(geocoding_router)
 api_router.include_router(stations_router)
 api_router.include_router(mapid_router)
 api_router.include_router(spatial_layers_router)
+api_router.include_router(station_facilities_router)

@@ -1,6 +1,6 @@
 import type { FeatureCollection, Point } from "geojson";
 
-export type SpatialProperties = { id: string; name: string | null };
+export type SpatialProperties = { id: string; name: string | null; coordinates?: [number, number] };
 export type SpatialData = FeatureCollection<Point, SpatialProperties> & { zoom_in_required: boolean };
 export type SpatialLayerId = "stations" | "pju" | "health" | "police";
 const endpoints = { stations: "stations", pju: "lighting", health: "health", police: "police" };

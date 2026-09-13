@@ -3,8 +3,8 @@
 import { useCallback, useState } from "react";
 import { InteractiveMap } from "../components/map/interactive-map";
 import { RoutePlanner } from "../components/routing/route-planner";
-import { dummyStations } from "../components/station/dummy-stations";
 import { StationInfo } from "../components/station/station-info";
+import { StationSchedule } from "../components/station/station-schedule";
 import { Card } from "../components/ui/card";
 import { MapNavigation } from "../components/ui/navigation";
 import { StatusIndicator } from "../components/ui/status-indicator";
@@ -22,19 +22,13 @@ const navigation = [
 
 export default function HomePage() {
   const [activePanel, setActivePanel] = useState("stations");
-  const [station, setStation] = useState(dummyStations[0]);
   const [mapStation, setMapStation] = useState<SpatialProperties | null>(null);
   const [route, setRoute] = useState<BaseRoute | null>(null);
   const [walkingArea, setWalkingArea] = useState<WalkingArea | null>(null);
   const selectStation = useCallback((code: string, point?: SpatialProperties) => {
     setWalkingArea(null);
-    setMapStation(point ?? null);
-    if (point) setActivePanel("stations");
-    const selected = dummyStations.find((item) => item.code === code);
-    if (selected) {
-      setStation(selected);
-      setActivePanel("stations");
-    }
+    setMapStation(point ? { ...point, id: code } : null);
+    setActivePanel("stations");
   }, []);
 
   return (
@@ -55,7 +49,7 @@ export default function HomePage() {
             route={route}
             walkingArea={walkingArea}
           />
-          <AssistantChat stationId={mapStation?.id ?? station?.code ?? null} />
+          <AssistantChat stationId={mapStation?.id ?? null} />
           </div>
           
         </section>
@@ -64,8 +58,11 @@ export default function HomePage() {
           <MapNavigation items={navigation} activeId={activePanel} onChange={setActivePanel} />
           <Card>
             <div hidden={activePanel !== "stations"}>
-              {mapStation ? <div><Heading size="md">{mapStation.name ?? "Stasiun"}</Heading><Text size="sm" tone="muted">{mapStation.id}</Text></div> : <StationInfo station={station} />}
-              <WalkingControls key={mapStation ? `map-${mapStation.id}` : `card-${station.code}`} origin={mapStation ? { id: mapStation.id, name: mapStation.name ?? "stasiun terpilih" } : { id: station.code, name: station.name, coordinates: station.coordinates }} onChange={setWalkingArea} />
+              {mapStation ? <>
+                <StationInfo station={mapStation} />
+                <StationSchedule stationId={mapStation.id} />
+                <WalkingControls origin={{ id: mapStation.id, name: mapStation.name ?? "stasiun terpilih", coordinates: mapStation.coordinates }} onChange={setWalkingArea} />
+              </> : <Text size="sm" tone="muted">Pilih stasiun pada peta untuk melihat informasi stasiun.</Text>}
             </div>
             <div hidden={activePanel !== "routing"} className="space-y-4">
               <Heading size="md">Rencanakan perjalanan</Heading>
