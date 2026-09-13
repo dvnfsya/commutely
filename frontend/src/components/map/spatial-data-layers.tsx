@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Popup, type GeoJSONSource, type Map as MapLibreMap, type MapLayerMouseEvent } from "maplibre-gl";
-import { fetchSpatialLayer, type SpatialLayerId, type SpatialProperties } from "../../lib/spatial-layers-api";
+import { fetchSpatialLayer, type Retail24hProperties, type SpatialLayerId, type SpatialProperties } from "../../lib/spatial-layers-api";
 import type { MapLayerControlState } from "./map-layer-control";
 
 const definitions = {
@@ -10,7 +10,54 @@ const definitions = {
   pju: { label: "PJU", color: "#eab308" },
   health: { label: "Fasilitas kesehatan", color: "#14b8a6" },
   police: { label: "Kantor polisi", color: "#2563eb" },
+  retail24h: { label: "Retail 24 Jam", color: "#f97316" },
 };
+
+function textProperty(properties: Record<string, unknown>, key: keyof Retail24hProperties) {
+  const value = properties[key];
+  return typeof value === "string" && value.trim() ? value.trim() : null;
+}
+
+function retailPopup(properties: Record<string, unknown>) {
+  const content = document.createElement("div");
+  content.className = "space-y-1 text-sm text-slate-700";
+  const name = textProperty(properties, "name") ?? "Retail 24 Jam";
+  const title = document.createElement("strong");
+  title.className = "block text-slate-900";
+  title.textContent = name;
+  content.append(title);
+
+  const addField = (label: string, value: string | null) => {
+    if (!value) return;
+    const field = document.createElement("div");
+    field.textContent = `${label}: ${value}`;
+    content.append(field);
+  };
+  addField("Kategori", textProperty(properties, "category"));
+  addField("Alamat", textProperty(properties, "address"));
+  const rating = properties.rating;
+  if (typeof rating === "number" && Number.isFinite(rating)) addField("Rating", String(rating));
+  addField("Telepon", textProperty(properties, "phone"));
+
+  const website = textProperty(properties, "website");
+  if (website) {
+    const field = document.createElement("div");
+    const link = document.createElement("a");
+    try {
+      const url = new URL(website);
+      if (url.protocol === "http:" || url.protocol === "https:") {
+        link.href = url.toString();
+        link.target = "_blank";
+        link.rel = "noreferrer";
+      }
+    } catch { /* Display an unparseable URL without making it a link. */ }
+    link.className = "text-blue-600 underline";
+    link.textContent = website;
+    field.append("Website: ", link);
+    content.append(field);
+  }
+  return content;
+}
 
 function SpatialLayer({ map, layer, visible, onStationSelect }: {
   map: MapLibreMap; layer: SpatialLayerId; visible: boolean;
@@ -62,7 +109,13 @@ function SpatialLayer({ map, layer, visible, onStationSelect }: {
     const moving = () => { controller?.abort(); clearTimeout(timer); source.setData(empty); popup?.remove(); };
     const click = (event: MapLayerMouseEvent) => {
       const properties = event.features?.[0]?.properties;
-      if (!properties || typeof properties.id !== "string") return;
+      if (!properties) return;
+      if (layer === "retail24h") {
+        popup?.remove();
+        popup = new Popup({ offset: 12 }).setLngLat(event.lngLat).setDOMContent(retailPopup(properties)).addTo(map);
+        return;
+      }
+      if (typeof properties.id !== "string") return;
       const name = typeof properties.name === "string" ? properties.name : null;
       const geometry = event.features?.[0]?.geometry;
       const coordinates = geometry?.type === "Point" && Array.isArray(geometry.coordinates)

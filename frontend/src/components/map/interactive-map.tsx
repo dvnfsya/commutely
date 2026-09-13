@@ -20,7 +20,7 @@ const ROUTE_SOURCE_ID = "ors-route";
 const ROUTE_LAYER_ID = "ors-route-line";
 type LayerKey = DataLayerId | "stations";
 type LayerVisibility = Record<LayerKey, boolean>;
-const initialVisibility: LayerVisibility = { stations: true, pju: false, police: false, health: false, survey: true };
+const initialVisibility: LayerVisibility = { stations: true, pju: false, police: false, health: false, retail24h: false, survey: true };
 
 export type InteractiveMapProps = {
   /** MAPID Maps style JSON URL. Configure it through NEXT_PUBLIC_MAPID_STYLE_URL. */

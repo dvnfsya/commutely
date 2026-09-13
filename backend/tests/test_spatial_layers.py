@@ -75,3 +75,39 @@ def test_database_failure_is_sanitized(api):
     response = client.get("/api/v1/layers/health")
     assert response.status_code == 503
     assert "database-password" not in response.text
+
+
+def test_facilities24h_returns_geojson_feature_collection(api):
+    client, session = api
+    session.execute.return_value.mappings.return_value.all.return_value = []
+    response = client.get("/api/v1/layers/facilities24h")
+    assert response.status_code == 200
+    assert response.json() == {"type": "FeatureCollection", "features": [], "zoom_in_required": False}
+
+
+def test_facilities24h_transforms_utm_48s_geometry(api):
+    client, session = api
+    session.execute.return_value.mappings.return_value.all.return_value = []
+    assert client.get("/api/v1/layers/facilities24h").status_code == 200
+    sql = str(session.execute.call_args.args[0].compile(dialect=postgresql.dialect()))
+    assert "ST_Transform(ST_SetSRID(public.facilities24h.geom, %(ST_SetSRID_1)s), %(ST_Transform_1)s)" in sql
+    assert 32748 in session.execute.call_args.args[0].compile(dialect=postgresql.dialect()).params.values()
+    assert 4326 in session.execute.call_args.args[0].compile(dialect=postgresql.dialect()).params.values()
+
+
+def test_facilities24h_maps_only_popup_properties(api):
+    client, session = api
+    row = {
+        "geometry": {"type": "Point", "coordinates": [106.871, -6.212]},
+        "name": "Retail Malam", "category": "Minimarket", "address": "Jl. Contoh 1",
+        "phone": "021-123", "website": "https://example.test", "rating": 4.5,
+    }
+    session.execute.return_value.mappings.return_value.all.return_value = [row]
+    response = client.get("/api/v1/layers/facilities24h")
+    assert response.status_code == 200
+    assert response.json()["features"] == [{
+        "type": "Feature", "geometry": row["geometry"], "properties": {
+            "name": "Retail Malam", "category": "Minimarket", "address": "Jl. Contoh 1",
+            "phone": "021-123", "website": "https://example.test", "rating": 4.5,
+        },
+    }]
