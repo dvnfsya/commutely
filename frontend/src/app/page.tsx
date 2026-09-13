@@ -11,6 +11,7 @@ import { MapNavigation } from "../components/ui/navigation";
 import { StatusIndicator } from "../components/ui/status-indicator";
 import { Heading, Text } from "../components/ui/typography";
 import type { BaseRoute } from "../components/routing/types";
+import { AssistantChat } from "../components/assistant/assistant-chat";
 
 const navigation = [
   { id: "stations", label: "Stasiun", icon: "◉" },
@@ -41,10 +42,13 @@ export default function HomePage() {
 
       <main className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,26rem)]">
         <section aria-label="Eksplorasi peta dan stasiun" className="min-w-0 space-y-4 lg:sticky lg:top-6">
+          <div className="relative">
           <InteractiveMap
             onStationSelect={selectStation}
             route={route}
           />
+          <AssistantChat stationId={station?.code ?? null} />
+          </div>
           <div>
             <Heading size="md" className="mb-3">Jelajahi stasiun</Heading>
             <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">

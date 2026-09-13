@@ -50,7 +50,7 @@ export function CommunityDataLayer({ map, visible }: { map: MapLibreMap | null; 
   }, [map, state, visible]);
 
   if (!visible) return null;
-  return <div role="status" className="absolute bottom-3 left-3 z-10 max-w-[calc(100%-5rem)] rounded-lg bg-white/95 px-3 py-2 text-xs text-slate-700 shadow">
+  return <div role="status" className="absolute bottom-3 left-20 z-10 max-w-[calc(100%-9rem)] rounded-lg bg-white/95 px-3 py-2 text-xs text-slate-700 shadow">
     {state.status === "loading" ? "Memuat Community Data…" : state.status === "error" ? <>
       Community Data gagal dimuat. <button type="button" className="underline" onClick={() => { setState({ status: "loading" }); setAttempt((value) => value + 1); }}>Coba lagi</button>
     </> : state.data.features.length === 0 ? "Belum ada Community Data." : `Community Data · ${state.data.features.length} titik`}
