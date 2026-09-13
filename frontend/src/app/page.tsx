@@ -148,8 +148,7 @@ export default function HomePage() {
               <Text size="sm" tone="muted">
                 Temukan rute dari lokasi kamu ke stasiun
                 atau perjalanan pulang dari stasiun ke
-                tujuan. Data Safety Score stasiun masih
-                berupa contoh.
+                tujuan. 
               </Text>
 
               <RoutePlanner
