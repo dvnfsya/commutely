@@ -4,7 +4,6 @@ import { useCallback, useState } from "react";
 import { InteractiveMap } from "../components/map/interactive-map";
 import { RoutePlanner } from "../components/routing/route-planner";
 import { dummyStations } from "../components/station/dummy-stations";
-import { StationCard } from "../components/station/station-card";
 import { StationInfo } from "../components/station/station-info";
 import { Card } from "../components/ui/card";
 import { MapNavigation } from "../components/ui/navigation";
@@ -58,14 +57,7 @@ export default function HomePage() {
           />
           <AssistantChat stationId={mapStation?.id ?? station?.code ?? null} />
           </div>
-          <div>
-            <Heading size="md" className="mb-3">Jelajahi stasiun</Heading>
-            <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-              {dummyStations.map((item) => (
-                <StationCard key={item.id} station={item} onSelect={(selected) => selectStation(selected.code)} />
-              ))}
-            </div>
-          </div>
+          
         </section>
 
         <aside aria-label="Informasi perjalanan" className="min-w-0 space-y-4">
