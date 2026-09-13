@@ -6,11 +6,13 @@ import { useEffect, useRef, useState } from "react";
 import maplibregl, { type GeoJSONSource, type Map as MapLibreMap } from "maplibre-gl";
 import { cn } from "../ui/cn";
 import type { BaseRoute } from "../routing/types";
-import { DATA_LAYER_IDS, ensureDataLayer, type DataLayerId } from "./map-layer-data";
+import { type DataLayerId } from "./map-layer-data";
 import { MapLayerControl, type MapLayerControlState } from "./map-layer-control";
-import { stationGeoJson } from "./dummy-geojson";
-import styles from "./map-overrides.module.css";
 import { CommunityDataLayer } from "./community-data-layer";
+import { SpatialDataLayers } from "./spatial-data-layers";
+import type { SpatialProperties } from "../../lib/spatial-layers-api";
+import type { WalkingArea } from "../../lib/isochrone-api";
+import { WalkingOverlay } from "../isochrone/walking-overlay";
 
 
 const DEFAULT_CENTER: [number, number] = [106.8272, -6.2045];
@@ -18,17 +20,18 @@ const ROUTE_SOURCE_ID = "ors-route";
 const ROUTE_LAYER_ID = "ors-route-line";
 type LayerKey = DataLayerId | "stations";
 type LayerVisibility = Record<LayerKey, boolean>;
-const initialVisibility: LayerVisibility = { stations: true, pju: false, "nighttime-light": false, police: false, health: false, retail: false, survey: true };
+const initialVisibility: LayerVisibility = { stations: true, pju: false, police: false, health: false, survey: true };
 
 export type InteractiveMapProps = {
   /** MAPID Maps style JSON URL. Configure it through NEXT_PUBLIC_MAPID_STYLE_URL. */
   mapStyleUrl?: string;
   className?: string;
-  onStationSelect?: (stationCode: string) => void;
+  onStationSelect?: (stationCode: string, station?: SpatialProperties) => void;
   route?: BaseRoute | null;
+  walkingArea?: WalkingArea | null;
 };
 
-export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STYLE_URL, className, onStationSelect, route }: InteractiveMapProps) {
+export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STYLE_URL, className, onStationSelect, route, walkingArea = null }: InteractiveMapProps) {
   const mapNode = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const [mapReady, setMapReady] = useState(false);
@@ -48,32 +51,13 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
         layout: { "line-cap": "round", "line-join": "round" },
         paint: { "line-color": "#2563eb", "line-width": 5, "line-opacity": 0.9 },
       });
-      stationGeoJson.features.forEach((feature) => {
-        const element = document.createElement("button");
-        element.type = "button";
-        element.className = styles.stationMarker;
-        element.setAttribute("aria-label", feature.properties.name);
-        element.textContent = feature.properties.code;
-        const popup = new maplibregl.Popup({ offset: 18 }).setHTML(`<strong>${feature.properties.name}</strong><br/><span>${feature.properties.area}</span>`);
-        const marker = new maplibregl.Marker({ element, anchor: "bottom" }).setLngLat(feature.geometry.coordinates as [number, number]).setPopup(popup).addTo(map);
-        element.addEventListener("click", () => onStationSelect?.(feature.properties.code));
-        marker.getElement().dataset.layer = "stations";
-      });
+
       setMapReady(true);
     });
     return () => { map.remove(); mapRef.current = null; setMapReady(false); };
   }, [mapStyleUrl, onStationSelect]);
 
-  useEffect(() => {
-    const map = mapRef.current;
-    if (!map || !mapReady) return;
-    DATA_LAYER_IDS.forEach((layerId) => {
-      if (layerId === "survey") return;
-      // A data source is created only the first time its layer is made visible.
-      if (visibility[layerId] || map.getSource(layerId)) ensureDataLayer(map, layerId, visibility[layerId]);
-    });
-    map.getContainer().querySelectorAll<HTMLElement>("[data-layer='stations']").forEach((marker) => { marker.style.display = visibility.stations ? "block" : "none"; });
-  }, [mapReady, visibility]);
+
 
   useEffect(() => {
     const map = mapRef.current;
@@ -97,6 +81,8 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
       <div ref={mapNode} className="h-full w-full" />
     </div>
     <MapLayerControl visibility={visibility as MapLayerControlState} onToggle={toggleLayer} />
+    <WalkingOverlay map={mapReady ? mapRef.current : null} area={walkingArea} />
     <CommunityDataLayer map={mapReady ? mapRef.current : null} visible={visibility.survey} />
+    <SpatialDataLayers map={mapReady ? mapRef.current : null} visibility={visibility} onStationSelect={onStationSelect} />
   </section>;
 }
