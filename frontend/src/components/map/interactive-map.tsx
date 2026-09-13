@@ -10,6 +10,7 @@ import { DATA_LAYER_IDS, ensureDataLayer, type DataLayerId } from "./map-layer-d
 import { MapLayerControl, type MapLayerControlState } from "./map-layer-control";
 import { stationGeoJson } from "./dummy-geojson";
 import styles from "./map-overrides.module.css";
+import { CommunityDataLayer } from "./community-data-layer";
 
 
 const DEFAULT_CENTER: [number, number] = [106.8272, -6.2045];
@@ -17,7 +18,7 @@ const ROUTE_SOURCE_ID = "ors-route";
 const ROUTE_LAYER_ID = "ors-route-line";
 type LayerKey = DataLayerId | "stations";
 type LayerVisibility = Record<LayerKey, boolean>;
-const initialVisibility: LayerVisibility = { stations: true, pju: false, "nighttime-light": false, police: false, health: false, retail: false, survey: false };
+const initialVisibility: LayerVisibility = { stations: true, pju: false, "nighttime-light": false, police: false, health: false, retail: false, survey: true };
 
 export type InteractiveMapProps = {
   /** MAPID Maps style JSON URL. Configure it through NEXT_PUBLIC_MAPID_STYLE_URL. */
@@ -67,6 +68,7 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
     const map = mapRef.current;
     if (!map || !mapReady) return;
     DATA_LAYER_IDS.forEach((layerId) => {
+      if (layerId === "survey") return;
       // A data source is created only the first time its layer is made visible.
       if (visibility[layerId] || map.getSource(layerId)) ensureDataLayer(map, layerId, visibility[layerId]);
     });
@@ -95,5 +97,6 @@ export function InteractiveMap({ mapStyleUrl = process.env.NEXT_PUBLIC_MAPID_STY
       <div ref={mapNode} className="h-full w-full" />
     </div>
     <MapLayerControl visibility={visibility as MapLayerControlState} onToggle={toggleLayer} />
+    <CommunityDataLayer map={mapReady ? mapRef.current : null} visible={visibility.survey} />
   </section>;
 }

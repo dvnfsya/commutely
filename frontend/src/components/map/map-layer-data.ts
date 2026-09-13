@@ -1,6 +1,6 @@
 import type { FeatureCollection } from "geojson";
 import { Popup, type Map as MapLibreMap } from "maplibre-gl";
-import { healthGeoJson, nighttimeLightGeoJson, pjuGeoJson, policeGeoJson, retailGeoJson, surveyActivityGeoJson } from "./dummy-geojson";
+import { healthGeoJson, nighttimeLightGeoJson, pjuGeoJson, policeGeoJson, retailGeoJson } from "./dummy-geojson";
 
 export const DATA_LAYER_IDS = ["pju", "nighttime-light", "police", "health", "retail", "survey"] as const;
 export type DataLayerId = (typeof DATA_LAYER_IDS)[number];
@@ -19,7 +19,7 @@ export const dataLayerDefinitions: Record<DataLayerId, LayerDefinition> = {
   police: { label: "Kantor polisi", description: "Fasilitas kepolisian", data: policeGeoJson, mapType: "circle", paint: { "circle-radius": 8, "circle-color": "#2563eb", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } },
   health: { label: "Fasilitas kesehatan", description: "Layanan kesehatan terdekat", data: healthGeoJson, mapType: "circle", paint: { "circle-radius": 8, "circle-color": "#14b8a6", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } },
   retail: { label: "Retail 24 jam", description: "Aktivitas ekonomi malam", data: retailGeoJson, mapType: "circle", paint: { "circle-radius": 8, "circle-color": "#7c3aed", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } },
-  survey: { label: "Survey Activities", description: "Validasi kondisi lapangan", data: surveyActivityGeoJson, mapType: "circle", paint: { "circle-radius": 7, "circle-color": "#ff3d8d", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } },
+  survey: { label: "Community Data", description: "Survei #RekaModa", data: { type: "FeatureCollection", features: [] }, mapType: "circle", paint: { "circle-radius": 7, "circle-color": "#ff3d8d", "circle-stroke-width": 2, "circle-stroke-color": "#ffffff" } },
 };
 
 /** Adds a source only after a user enables its layer; later toggles only change visibility. */

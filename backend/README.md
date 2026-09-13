@@ -47,7 +47,7 @@ timeout, dan 502 untuk kegagalan HTTP/network atau respons ORS tidak valid.
 Pesan error tidak meneruskan body atau exception provider. Tests memakai
 HTTPX MockTransport dan tidak memerlukan key nyata atau koneksi eksternal.
 
-`MAPID_API_KEY` hanya placeholder opsional untuk integrasi mendatang. Jangan
+`MAPID_API_KEY` digunakan untuk integrasi Activities backend. Jangan
 commit kredensial atau memasukkannya ke variabel frontend `NEXT_PUBLIC_*`.
 Endpoint health tidak memanggil database atau layanan eksternal.
 
@@ -235,6 +235,50 @@ menghapus kedua tabel beserta indeksnya dan tidak menghapus extension.
 
 Tests menghasilkan SQL upgrade/downgrade secara offline menggunakan URI palsu,
 memeriksa kesesuaian model/migration dan indeks, tanpa koneksi Supabase.
+
+## MAPID Activities
+
+`POST /api/v1/mapid/activities` performs a read-only search using the documented
+MAPID Activities API (documentation supplied August 5, 2026). No data is persisted.
+Set `MAPID_API_KEY` in the backend environment only. Optional
+`MAPID_ACTIVITIES_URL` defaults to `https://server.mapid.io/web/competition/activities`;
+use only a trusted HTTPS endpoint because it receives the `X-API-KEY` header.
+Redirects are disabled; timeout is 30 seconds with a 5-second connection timeout.
+
+The JSON body requires `feature`, a GeoJSON Polygon with longitude/latitude
+coordinates. Every ring needs at least four positions and identical first/last
+positions. Optional `start_date` and `end_date` (`YYYY-MM-DD`) must be supplied
+together in chronological order. Optional `hashtag` is an array of strings;
+`author` is a string. No offset or limit parameter is supported.
+
+The response is `{activities: [...], filters: {...}, total: N}`. Activity objects
+and filter metadata retain upstream values; the provider envelope is removed.
+Without dates MAPID caps results at 60; with dates all matching records can be
+returned. The backend does not silently truncate, paginate, simplify polygons,
+perform spatial analysis, or generate fallback records.
+
+Errors: 422 invalid filters, 503 missing key, 504 provider timeout, and 502 for
+HTTP/network errors, malformed responses, or credential echoes. Provider error
+bodies are not returned. Tests use HTTPX MockTransport without live MAPID calls.
+
+## GeoMAPID uploaded layers
+
+- `GET /api/v1/mapid/layers?project_id=...` lists project layers via
+  `https://geoserver.mapid.io/layers_new/get_layer_list`.
+- `GET /api/v1/mapid/layer?project_id=...&layer_id=...` retrieves an uploaded layer
+  via `https://geoserver.mapid.io/layers_new/get_layer`.
+
+Both reuse backend-only `MAPID_API_KEY` through `X-API-KEY`, the MAPID HTTPX
+client, timeouts, disabled redirects, and sanitized errors. Optional
+`MAPID_LAYER_LIST_URL` and `MAPID_LAYER_URL` override the documented HTTPS URLs.
+Project and layer identifiers are required query parameters, not credentials.
+
+Responses preserve upstream JSON envelopes, properties, and spatial coordinates.
+Validation checks structured JSON, finite numbers, explicit error envelopes, and
+credential echoes. A complete upstream response schema was not supplied; this
+foundation does not validate layer fields or GeoJSON topology. No spatial
+processing, persistence, or Activities changes are involved. Tests mock HTTP;
+live GeoMAPID access and project permissions are not verified.
 
 ## Pengujian
 
