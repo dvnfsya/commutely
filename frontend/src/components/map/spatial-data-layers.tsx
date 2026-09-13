@@ -10,7 +10,7 @@ const definitions = {
   pju: { label: "PJU", color: "#eab308" },
   health: { label: "Fasilitas kesehatan", color: "#14b8a6" },
   police: { label: "Kantor polisi", color: "#2563eb" },
-  retail24h: { label: "Retail 24 Jam", color: "#f97316" },
+  retail24h: { label: "Fasilitas 24 Jam", color: "#f97316" },
 };
 
 function textProperty(properties: Record<string, unknown>, key: keyof Retail24hProperties) {

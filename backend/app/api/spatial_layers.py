@@ -2,12 +2,13 @@ from math import isfinite
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from sqlalchemy import JSON, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.api.stations import get_read_session
-from app.models import Facility24h, HealthFacility, Lighting, PoliceStation, Station
+from app.models import HealthFacility, Lighting, PoliceStation, Station
+from app.models.facility_24h import facilities24h as facilities24h_table
 from app.schemas.stations import StationGeometry
 
 router = APIRouter(prefix="/layers", tags=["spatial layers"])
@@ -38,6 +39,17 @@ class Facility24hProperties(BaseModel):
     phone: str | None = None
     website: str | None = None
     rating: float | None = None
+
+    @field_validator("rating", mode="before")
+    @classmethod
+    def numeric_rating_or_none(cls, value):
+        if value is None or (isinstance(value, str) and not value.strip()):
+            return None
+        try:
+            rating = float(value)
+        except (TypeError, ValueError):
+            return None
+        return rating if isfinite(rating) else None
 
 
 class Facility24hFeature(BaseModel):
@@ -79,13 +91,17 @@ def collection(rows):
 
 def facilities24h_query():
     # Coordinates were stored in UTM Zone 48S despite the column's declared 4326 SRID.
+    # Each stored MULTIPOINT Z contains one facility point; emit the existing Point contract in 2D.
+    transformed_point = func.ST_Force2D(func.ST_GeometryN(
+        func.ST_Transform(func.ST_SetSRID(facilities24h_table.c.geom, 32748), 4326), 1,
+    ))
     geometry = cast(func.ST_AsGeoJSON(
-        func.ST_Transform(func.ST_SetSRID(Facility24h.geom, 32748), 4326), 15,
+        transformed_point, 15,
     ), JSON).label("geometry")
     return select(
-        geometry, Facility24h.name, Facility24h.category, Facility24h.address,
-        Facility24h.phone, Facility24h.website, Facility24h.rating,
-    ).where(Facility24h.geom.is_not(None), ~func.ST_IsEmpty(Facility24h.geom))
+        geometry, facilities24h_table.c.name, facilities24h_table.c.category, facilities24h_table.c.address,
+        facilities24h_table.c.phone, facilities24h_table.c.website, facilities24h_table.c.rating,
+    ).where(facilities24h_table.c.geom.is_not(None), ~func.ST_IsEmpty(facilities24h_table.c.geom))
 
 
 @router.get("/facilities24h", response_model=Facility24hCollection)

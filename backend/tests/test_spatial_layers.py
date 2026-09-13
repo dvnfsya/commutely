@@ -77,7 +77,7 @@ def test_database_failure_is_sanitized(api):
     assert "database-password" not in response.text
 
 
-def test_facilities24h_returns_geojson_feature_collection(api):
+def test_facilities24h_returns_empty_geojson_feature_collection(api):
     client, session = api
     session.execute.return_value.mappings.return_value.all.return_value = []
     response = client.get("/api/v1/layers/facilities24h")
@@ -90,12 +90,12 @@ def test_facilities24h_transforms_utm_48s_geometry(api):
     session.execute.return_value.mappings.return_value.all.return_value = []
     assert client.get("/api/v1/layers/facilities24h").status_code == 200
     sql = str(session.execute.call_args.args[0].compile(dialect=postgresql.dialect()))
-    assert "ST_Transform(ST_SetSRID(public.facilities24h.geom, %(ST_SetSRID_1)s), %(ST_Transform_1)s)" in sql
+    assert "ST_Force2D(ST_GeometryN(ST_Transform(ST_SetSRID(public.facilities24h.geom, %(ST_SetSRID_1)s), %(ST_Transform_1)s), %(ST_GeometryN_1)s))" in sql
     assert 32748 in session.execute.call_args.args[0].compile(dialect=postgresql.dialect()).params.values()
     assert 4326 in session.execute.call_args.args[0].compile(dialect=postgresql.dialect()).params.values()
 
 
-def test_facilities24h_maps_only_popup_properties(api):
+def test_facilities24h_returns_transformed_point_and_popup_properties(api):
     client, session = api
     row = {
         "geometry": {"type": "Point", "coordinates": [106.871, -6.212]},
@@ -111,3 +111,11 @@ def test_facilities24h_maps_only_popup_properties(api):
             "phone": "021-123", "website": "https://example.test", "rating": 4.5,
         },
     }]
+
+
+def test_facilities24h_database_failure_is_sanitized(api):
+    client, session = api
+    session.execute.side_effect = SQLAlchemyError("facilities24h-schema-detail")
+    response = client.get("/api/v1/layers/facilities24h")
+    assert response.status_code == 503
+    assert "facilities24h-schema-detail" not in response.text

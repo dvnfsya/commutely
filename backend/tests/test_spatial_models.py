@@ -13,6 +13,7 @@ from app.models import (
     HalteDropoff, HalteTransjakarta, HealthFacility, Lighting,
     PoliceStation, Railway, Station, safety_score,
 )
+from app.models.facility_24h import facilities24h
 
 
 @pytest.mark.parametrize("model,geometry", [
@@ -38,6 +39,15 @@ def test_station_columns():
     assert Station.__tablename__ == "station"
     assert "public.stations" not in Base.metadata.tables
     assert "public.facilities" not in Base.metadata.tables
+
+
+def test_facilities24h_mapping_matches_existing_geometry_and_rating_columns():
+    table = facilities24h
+    assert table.schema == "public"
+    assert table.c.geom.type.geometry_type == "MULTIPOINTZ"
+    assert table.c.geom.type.srid == 4326
+    assert isinstance(table.c.rating.type, String)
+    assert table.metadata is not Base.metadata
 
 
 def test_exact_identifiers_and_generic_transjakarta_geometry():
