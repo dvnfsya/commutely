@@ -3,8 +3,8 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Commute.ly | Konteks keamanan perjalanan KRL",
-  description: "Eksplorasi stasiun, fasilitas sekitar, dan konteks keamanan perjalanan KRL di Jakarta. Prototype dengan data dummy.",
+  title: "Commute.ly | WebGIS keamanan perjalanan KRL",
+  description: "Eksplorasi stasiun, fasilitas sekitar, dan konteks keamanan perjalanan KRL di Jakarta.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
