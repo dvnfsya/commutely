@@ -6,7 +6,7 @@ import { fetchSpatialLayer, type Retail24hProperties, type SpatialLayerId, type 
 import type { MapLayerControlState } from "./map-layer-control";
 
 const definitions = {
-  stations: { label: "Stasiun", color: "#e83e8c" },
+  stations: { label: "Stasiun", color: "#c63ee8" },
   pju: { label: "PJU", color: "#eab308" },
   health: { label: "Fasilitas kesehatan", color: "#14b8a6" },
   police: { label: "Kantor polisi", color: "#2563eb" },
@@ -70,14 +70,11 @@ function SpatialLayer({ map, layer, visible, onStationSelect }: {
     const empty = { type: "FeatureCollection" as const, features: [] };
     if (!map.getSource(id)) {
       map.addSource(id, { type: "geojson", data: empty });
-      if (layer === "stations") map.addLayer({ id, type: "symbol", source: id, layout: { "text-field": "🚆", "text-size": 22, "text-allow-overlap": true, "text-ignore-placement": true } });
-      else map.addLayer({ id, type: "circle", source: id, paint: { "circle-radius": layer === "pju" ? 3 : 7, "circle-color": definitions[layer].color, "circle-stroke-width": 1, "circle-stroke-color": "#ffffff" } });
+      map.addLayer({ id, type: "circle", source: id, paint: {
+        "circle-radius": layer === "pju" ? 3 : 7, "circle-color": definitions[layer].color,
+        "circle-stroke-width": 1, "circle-stroke-color": "#ffffff",
+      } });
     }
-    //   map.addLayer({ id, type: "circle", source: id, paint: {
-    //     "circle-radius": layer === "pju" ? 3 : 7, "circle-color": definitions[layer].color,
-    //     "circle-stroke-width": 1, "circle-stroke-color": "#ffffff",
-    //   } });
-    // }
     map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
     if (!visible) return;
     let active = true;
