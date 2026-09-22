@@ -125,7 +125,8 @@ function SpatialLayer({ map, layer, visible, onStationSelect }: {
       content.textContent = name ?? definitions[layer].label;
       popup?.remove();
       popup = new Popup({ offset: 12 }).setLngLat(event.lngLat).setDOMContent(content).addTo(map);
-      if (layer === "stations") onStationSelect?.(properties.id, { id: properties.id, name, coordinates });
+      if (layer === "stations") map.addLayer({ id, type: "symbol", source: id, layout: { "text-field": "🚆", "text-size": 22, "text-allow-overlap": true, "text-ignore-placement": true } }); else map.addLayer({ id, type: "circle", source: id, paint: { "circle-radius": layer === "pju" ? 3 : 7, "circle-color": definitions[layer].color, "circle-stroke-width": 1, "circle-stroke-color": "#ffffff" } });
+      // if (layer === "stations") onStationSelect?.(properties.id, { id: properties.id, name, coordinates });
     };
     const enter = () => { map.getCanvas().style.cursor = "pointer"; };
     const leave = () => { map.getCanvas().style.cursor = ""; };
